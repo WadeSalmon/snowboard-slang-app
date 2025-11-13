@@ -255,3 +255,63 @@ export function convertToSlang(text) {
   return converted.join(' ');
 }
 
+// Build reverse dictionary: slang term -> regular English
+function buildReverseDictionary() {
+  const reverseDict = {};
+  
+  for (const [regularTerm, slangTerms] of Object.entries(slangDictionary)) {
+    const slangArray = Array.isArray(slangTerms) ? slangTerms : [slangTerms];
+    
+    for (const slangTerm of slangArray) {
+      const lowerSlang = slangTerm.toLowerCase();
+      // If multiple regular terms map to the same slang, use the first one encountered
+      // (preferring more common/specific terms since we iterate dictionary order)
+      if (!reverseDict[lowerSlang]) {
+        reverseDict[lowerSlang] = regularTerm;
+      }
+    }
+  }
+  
+  return reverseDict;
+}
+
+// Reverse dictionary for converting slang back to regular English
+const reverseSlangDictionary = buildReverseDictionary();
+
+// Function to convert snowboard slang back to regular English
+export function convertFromSlang(text) {
+  if (!text) return '';
+  
+  let result = text.toLowerCase();
+  
+  // First, handle multi-word phrases in reverse (longer phrases first)
+  const reversePhrases = Object.keys(reverseSlangDictionary)
+    .filter(key => key.includes(' '))
+    .sort((a, b) => b.length - a.length);
+  
+  for (const slangPhrase of reversePhrases) {
+    const regex = new RegExp(`\\b${slangPhrase.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'gi');
+    result = result.replace(regex, reverseSlangDictionary[slangPhrase]);
+  }
+  
+  // Then handle single words
+  const words = result.split(/\s+/);
+  const converted = words.map(word => {
+    // Remove punctuation for matching
+    const cleanWord = word.replace(/[.,!?;:]/g, '');
+    const punctuation = word.replace(/[^.,!?;:]/g, '');
+    
+    // Check if this word is in the reverse dictionary
+    if (reverseSlangDictionary[cleanWord]) {
+      // Capitalize first letter if original word was capitalized
+      const regularTerm = reverseSlangDictionary[cleanWord];
+      return regularTerm + punctuation;
+    }
+    
+    // Return original word if no match
+    return word;
+  });
+  
+  return converted.join(' ');
+}
+

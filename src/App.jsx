@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
-import { convertToSlangHybrid } from './hybridConverter'
-import { convertToCanadianHockeySlangHybrid } from './hybridConverter'
+import { convertToSlangHybrid, convertFromSlangHybrid } from './hybridConverter'
+import { convertToCanadianHockeySlangHybrid, convertFromCanadianHockeySlangHybrid } from './hybridConverter'
 
 function App() {
   const [isListening, setIsListening] = useState(false)
@@ -8,6 +8,8 @@ function App() {
   const [convertedText, setConvertedText] = useState('')
   const [error, setError] = useState('')
   const [slangType, setSlangType] = useState('snowboard') // 'snowboard' or 'canadian-hockey'
+  const [direction, setDirection] = useState('to') // 'to' (regular -> slang) or 'from' (slang -> regular)
+  const [formalStyle, setFormalStyle] = useState(false) // Toggle for formal/Victorian style (only for reverse conversion)
   const [useAPI, setUseAPI] = useState(true) // Toggle for API usage
   const [isConverting, setIsConverting] = useState(false) // Loading state for API calls
   const recognitionRef = useRef(null)
@@ -37,17 +39,31 @@ function App() {
       setTranscript(transcript)
       setIsConverting(true)
       try {
-        const slang = slangType === 'snowboard' 
-          ? await convertToSlangHybrid(transcript, useAPI)
-          : await convertToCanadianHockeySlangHybrid(transcript, useAPI)
-        setConvertedText(slang)
+        let converted
+        if (direction === 'to') {
+          converted = slangType === 'snowboard' 
+            ? await convertToSlangHybrid(transcript, useAPI)
+            : await convertToCanadianHockeySlangHybrid(transcript, useAPI)
+        } else {
+          converted = slangType === 'snowboard'
+            ? await convertFromSlangHybrid(transcript, useAPI, formalStyle)
+            : await convertFromCanadianHockeySlangHybrid(transcript, useAPI, formalStyle)
+        }
+        setConvertedText(converted)
       } catch (err) {
         console.error('Conversion error:', err)
         // Fallback to local conversion on error
-        const slang = slangType === 'snowboard' 
-          ? await convertToSlangHybrid(transcript, false)
-          : await convertToCanadianHockeySlangHybrid(transcript, false)
-        setConvertedText(slang)
+        let converted
+        if (direction === 'to') {
+          converted = slangType === 'snowboard' 
+            ? await convertToSlangHybrid(transcript, false)
+            : await convertToCanadianHockeySlangHybrid(transcript, false)
+        } else {
+          converted = slangType === 'snowboard'
+            ? await convertFromSlangHybrid(transcript, false, formalStyle)
+            : await convertFromCanadianHockeySlangHybrid(transcript, false, formalStyle)
+        }
+        setConvertedText(converted)
       } finally {
         setIsConverting(false)
         setIsListening(false)
@@ -70,7 +86,7 @@ function App() {
         recognitionRef.current.stop()
       }
     }
-  }, [])
+  }, [direction, slangType, useAPI, formalStyle])
 
   const startListening = () => {
     if (recognitionRef.current && !isListening) {
@@ -91,17 +107,31 @@ function App() {
     setTranscript(text)
     setIsConverting(true)
     try {
-      const slang = slangType === 'snowboard'
-        ? await convertToSlangHybrid(text, useAPI)
-        : await convertToCanadianHockeySlangHybrid(text, useAPI)
-      setConvertedText(slang)
+      let converted
+      if (direction === 'to') {
+        converted = slangType === 'snowboard'
+          ? await convertToSlangHybrid(text, useAPI)
+          : await convertToCanadianHockeySlangHybrid(text, useAPI)
+        } else {
+          converted = slangType === 'snowboard'
+            ? await convertFromSlangHybrid(text, useAPI, formalStyle)
+            : await convertFromCanadianHockeySlangHybrid(text, useAPI, formalStyle)
+        }
+      setConvertedText(converted)
     } catch (err) {
       console.error('Conversion error:', err)
       // Fallback to local conversion on error
-      const slang = slangType === 'snowboard'
-        ? await convertToSlangHybrid(text, false)
-        : await convertToCanadianHockeySlangHybrid(text, false)
-      setConvertedText(slang)
+      let converted
+      if (direction === 'to') {
+        converted = slangType === 'snowboard'
+          ? await convertToSlangHybrid(text, false)
+          : await convertToCanadianHockeySlangHybrid(text, false)
+        } else {
+          converted = slangType === 'snowboard'
+            ? await convertFromSlangHybrid(text, false, formalStyle)
+            : await convertFromCanadianHockeySlangHybrid(text, false, formalStyle)
+        }
+      setConvertedText(converted)
     } finally {
       setIsConverting(false)
     }
@@ -113,16 +143,92 @@ function App() {
     if (transcript) {
       setIsConverting(true)
       try {
-        const slang = type === 'snowboard'
-          ? await convertToSlangHybrid(transcript, useAPI)
-          : await convertToCanadianHockeySlangHybrid(transcript, useAPI)
-        setConvertedText(slang)
+        let converted
+        if (direction === 'to') {
+          converted = type === 'snowboard'
+            ? await convertToSlangHybrid(transcript, useAPI)
+            : await convertToCanadianHockeySlangHybrid(transcript, useAPI)
+        } else {
+          converted = type === 'snowboard'
+            ? await convertFromSlangHybrid(transcript, useAPI, formalStyle)
+            : await convertFromCanadianHockeySlangHybrid(transcript, useAPI, formalStyle)
+        }
+        setConvertedText(converted)
       } catch (err) {
         console.error('Conversion error:', err)
-        const slang = type === 'snowboard'
-          ? await convertToSlangHybrid(transcript, false)
-          : await convertToCanadianHockeySlangHybrid(transcript, false)
-        setConvertedText(slang)
+        let converted
+        if (direction === 'to') {
+          converted = type === 'snowboard'
+            ? await convertToSlangHybrid(transcript, false)
+            : await convertToCanadianHockeySlangHybrid(transcript, false)
+        } else {
+          converted = type === 'snowboard'
+            ? await convertFromSlangHybrid(transcript, false, formalStyle)
+            : await convertFromCanadianHockeySlangHybrid(transcript, false, formalStyle)
+        }
+        setConvertedText(converted)
+      } finally {
+        setIsConverting(false)
+      }
+    }
+  }
+
+  const handleDirectionChange = async (dir) => {
+    setDirection(dir)
+    // If switching to 'to' direction, disable formal style
+    if (dir === 'to') {
+      setFormalStyle(false)
+    }
+    // Reconvert current text with new direction
+    if (transcript) {
+      setIsConverting(true)
+      try {
+        let converted
+        if (dir === 'to') {
+          converted = slangType === 'snowboard'
+            ? await convertToSlangHybrid(transcript, useAPI)
+            : await convertToCanadianHockeySlangHybrid(transcript, useAPI)
+        } else {
+          converted = slangType === 'snowboard'
+            ? await convertFromSlangHybrid(transcript, useAPI, formalStyle)
+            : await convertFromCanadianHockeySlangHybrid(transcript, useAPI, formalStyle)
+        }
+        setConvertedText(converted)
+      } catch (err) {
+        console.error('Conversion error:', err)
+        let converted
+        if (dir === 'to') {
+          converted = slangType === 'snowboard'
+            ? await convertToSlangHybrid(transcript, false)
+            : await convertToCanadianHockeySlangHybrid(transcript, false)
+        } else {
+          converted = slangType === 'snowboard'
+            ? await convertFromSlangHybrid(transcript, false, formalStyle)
+            : await convertFromCanadianHockeySlangHybrid(transcript, false, formalStyle)
+        }
+        setConvertedText(converted)
+      } finally {
+        setIsConverting(false)
+      }
+    }
+  }
+
+  const handleFormalStyleChange = async (formal) => {
+    setFormalStyle(formal)
+    // Reconvert current text with new formal style setting
+    if (transcript && direction === 'from') {
+      setIsConverting(true)
+      try {
+        let converted = slangType === 'snowboard'
+          ? await convertFromSlangHybrid(transcript, useAPI, formal)
+          : await convertFromCanadianHockeySlangHybrid(transcript, useAPI, formal)
+        setConvertedText(converted)
+      } catch (err) {
+        console.error('Conversion error:', err)
+        let converted = slangType === 'snowboard'
+          ? await convertFromSlangHybrid(transcript, false, formal)
+          : await convertFromCanadianHockeySlangHybrid(transcript, false, formal)
+        setConvertedText(converted)
       } finally {
         setIsConverting(false)
       }
@@ -137,6 +243,12 @@ function App() {
   }
 
   const getDescription = () => {
+    if (direction === 'from') {
+      if (slangType === 'canadian-hockey') {
+        return 'Speak or type to convert Canadian and hockey slang back to regular conversation'
+      }
+      return 'Speak or type to convert snowboard slang back to regular conversation'
+    }
     if (slangType === 'canadian-hockey') {
       return 'Speak or type to convert your words into Canadian and hockey slang'
     }
@@ -197,7 +309,7 @@ function App() {
 
         {/* Slang Type Selector */}
         <div className="mb-6 space-y-3">
-          <div className="flex gap-2 justify-center">
+          <div className="flex gap-2 justify-center flex-wrap">
             <button
               onClick={() => handleSlangTypeChange('snowboard')}
               className={`px-4 py-2 rounded-lg font-semibold transition-all ${
@@ -220,6 +332,47 @@ function App() {
             </button>
           </div>
           
+          {/* Direction Toggle */}
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => handleDirectionChange('to')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                direction === 'to'
+                  ? getButtonColor() + ' text-white shadow-md'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              → To Slang
+            </button>
+            <button
+              onClick={() => handleDirectionChange('from')}
+              className={`px-4 py-2 rounded-lg font-semibold transition-all ${
+                direction === 'from'
+                  ? getButtonColor() + ' text-white shadow-md'
+                  : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              }`}
+            >
+              ← From Slang
+            </button>
+          </div>
+          
+          {/* Formal Style Toggle (only shown when direction is 'from') */}
+          {direction === 'from' && (
+            <div className="flex items-center justify-center gap-2">
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={formalStyle}
+                  onChange={(e) => handleFormalStyleChange(e.target.checked)}
+                  className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
+                />
+                <span className="text-sm text-gray-700">
+                  🎩 Formal/Victorian Style
+                </span>
+              </label>
+            </div>
+          )}
+          
           {/* API Toggle */}
           <div className="flex items-center justify-center gap-2">
             <label className="flex items-center gap-2 cursor-pointer">
@@ -235,7 +388,7 @@ function App() {
                 className="w-4 h-4 text-blue-600 rounded focus:ring-blue-500"
               />
               <span className="text-sm text-gray-700">
-                Enable API lookups (Urban Dictionary)
+                Enable API lookups (Urban Dictionary) {direction === 'from' && '(forward conversion only)'}
               </span>
             </label>
             {isConverting && (
@@ -286,7 +439,7 @@ function App() {
             <textarea
               value={transcript}
               onChange={handleTextChange}
-              placeholder="Type your text here..."
+              placeholder={direction === 'from' ? "Type snowboard slang here..." : "Type your text here..."}
               className="w-full p-4 border-2 border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none resize-none"
               rows="3"
             />
@@ -304,11 +457,15 @@ function App() {
             </div>
           )}
 
-          {/* Converted Slang Display */}
+          {/* Converted Text Display */}
           {convertedText && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
-                {slangType === 'canadian-hockey' ? 'In Canadian/Hockey Slang:' : 'In Snowboard Slang:'}
+                {direction === 'from' 
+                  ? (formalStyle ? 'In Formal/Victorian English:' : 'In Regular English:')
+                  : slangType === 'canadian-hockey' 
+                    ? 'In Canadian/Hockey Slang:' 
+                    : 'In Snowboard Slang:'}
               </label>
               <div className={`p-4 bg-gradient-to-r ${getBgGradient()} border-2 ${getBorderColor()} rounded-lg`}>
                 <p className={`text-2xl font-bold ${getTextColor()}`}>{convertedText}</p>
@@ -320,8 +477,10 @@ function App() {
           <div className={`mt-8 p-4 ${slangType === 'canadian-hockey' ? 'bg-red-50 border-red-200' : 'bg-blue-50 border-blue-200'} rounded-lg border`}>
             <p className={`text-sm ${slangType === 'canadian-hockey' ? 'text-red-800' : 'text-blue-800'}`}>
               <strong>💡 Tip:</strong> Click the microphone button and speak clearly. 
-              The app will convert common words and phrases into {slangType === 'canadian-hockey' ? 'Canadian and hockey slang' : 'snowboard slang'}. 
-              You can also type directly in the text box for instant conversion. Switch between slang types using the buttons above.
+              {direction === 'from' 
+                ? ` The app will convert ${slangType === 'canadian-hockey' ? 'Canadian and hockey slang' : 'snowboard slang'} back to regular conversation.`
+                : ` The app will convert common words and phrases into ${slangType === 'canadian-hockey' ? 'Canadian and hockey slang' : 'snowboard slang'}.`}
+              {' '}You can also type directly in the text box for instant conversion. Switch between slang types and directions using the buttons above.
             </p>
           </div>
         </div>

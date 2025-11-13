@@ -1,6 +1,7 @@
 // Hybrid converter that uses local dictionaries first, then API lookups
-import { slangDictionary, convertToSlang as convertToSlangLocal } from './slangDictionary'
-import { canadianHockeyDictionary, convertToCanadianHockeySlang as convertToCanadianHockeySlangLocal } from './canadianHockeyDictionary'
+import { slangDictionary, convertToSlang as convertToSlangLocal, convertFromSlang as convertFromSlangLocal } from './slangDictionary'
+import { canadianHockeyDictionary, convertToCanadianHockeySlang as convertToCanadianHockeySlangLocal, convertFromCanadianHockeySlang as convertFromCanadianHockeySlangLocal } from './canadianHockeyDictionary'
+import { convertToFormalStyle } from './formalStyleConverter'
 import { getSlangFromAPI } from './apiService'
 
 // Helper to get random translation
@@ -145,6 +146,44 @@ export async function convertToCanadianHockeySlangHybrid(text, useAPI = true) {
     });
     result = resultWords.join(' ');
   }
+  
+  return result;
+}
+
+// Reverse conversion: Convert snowboard slang back to regular English
+export async function convertFromSlangHybrid(text, useAPI = true, formalStyle = false) {
+  if (!text) return '';
+  
+  // For reverse conversion, we primarily use the local dictionary
+  // since API lookups are for expanding regular terms to slang, not the reverse
+  let result = convertFromSlangLocal(text);
+  
+  // If formal style is requested, convert the regular English to formal/Victorian style
+  if (formalStyle) {
+    result = convertToFormalStyle(result);
+  }
+  
+  // If API is enabled, we could potentially try to look up unknown slang terms
+  // but for now, we'll stick with local reverse dictionary
+  // API lookups are more suited for forward conversion (regular -> slang)
+  
+  return result;
+}
+
+// Reverse conversion: Convert Canadian/Hockey slang back to regular English
+export async function convertFromCanadianHockeySlangHybrid(text, useAPI = true, formalStyle = false) {
+  if (!text) return '';
+  
+  // For reverse conversion, we primarily use the local dictionary
+  let result = convertFromCanadianHockeySlangLocal(text);
+  
+  // If formal style is requested, convert the regular English to formal/Victorian style
+  if (formalStyle) {
+    result = convertToFormalStyle(result);
+  }
+  
+  // Similar to snowboard reverse, API lookups are more suited for forward conversion
+  // The reverse dictionary handles the conversion from slang back to regular English
   
   return result;
 }
